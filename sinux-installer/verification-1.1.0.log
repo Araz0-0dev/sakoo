@@ -1,0 +1,45 @@
+Sinux Installer 1.1.0 - QEMU verification report
+Date   : 2026-11-03 14:28:06 UTC
+ISO    : Sinux-Installer-1.1.0-x86_64.iso
+SHA256 : aa416b0e2569d4275f1778c8dac05bb3df04bc2be4725e2f2ae9837d5eb78535
+Size   : 69242880 bytes
+QEMU   : QEMU emulator version 10.0.13 (Debian 1:10.0.13+ds-0+deb13u1)
+
+RESULT : 74 passed, 0 failed
+
+Tests:
+  T1  ISO boot, legacy BIOS, 9-entry GRUB menu
+  T2  ISO boot, UEFI/OVMF, 9-entry GRUB menu
+  T3  English automated install on 512 MiB disk + clean poweroff
+  T4  Farsi automated install on 256 MiB disk
+  T5  Dry run returns to menu and leaves the disk byte-identical
+  T6  Rescue shell 'exit' (the exact 1.0.0 panic path) -> supervisor
+  T7  Bad menu selection + console EOF -> idles, never exits
+  T8  Installed disk boots in BIOS to root@sinux:/root# (256 MiB RAM;
+      upstream Sinux PMM hangs in BIOS mode with >= 512 MiB)
+  T9  Installed disk boots in UEFI/OVMF to root@sinux:/root#
+  T10 4Kn (4096-byte sector) disk install
+  T11 Verbose debug boot, module load audit
+  T12 VGA-only console (no COM port): installer still runs, disk written
+  T13 VGA framebuffer proof: GRUB menu + installer dialog actually drawn
+  T14 USB still attached after install -> installed Sinux terminal boots
+  T15 Interactive install reboots instead of returning to the menu
+  T16 UEFI install registers BootNext so the disk boots without USB
+
+HOTFIX 2: after a successful install the machine now REBOOTS instead of
+          falling back into the installer menu.  ISO GRUB detects the
+          installed system and makes it the default (T14); UEFI also
+          gets a real NVRAM BootNext entry (T16).  Remove the USB stick when
+          prompted so the firmware cannot boot the installer again.
+
+HOTFIX  : default GRUB entries use console=tty0 ONLY.  The old
+          'console=tty0 console=ttyS0,115200' bound /dev/console to the
+          LAST console (the COM port), so on a PC without a serial port
+          the installer UI was invisible: one blinking cursor, top left.
+          T12 proves the installer runs and writes the disk with VGA only;
+          T13 proves the GRUB menu and the installer dialog are ACTUALLY
+          drawn on the VGA framebuffer (raw QMP screendumps, lit-pixel
+          counts ~28,700 / 261,379).  Safe text mode entry added as fallback.
+
+CRITICAL ASSERTION: no log contains 'Attempted to kill init',
+'Kernel panic' or 'not syncing'. PID 1 never exits in 1.1.0.
